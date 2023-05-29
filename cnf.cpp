@@ -2,82 +2,82 @@
 // Created by home on 19.05.23.
 //
 #include "cnf.h"
-unsigned long long max_number_with_given_bits(unsigned int bits)
+#include <algorithm>
+#include <cmath>
+size_t CNF::get_clause_size()const
 {
-    unsigned long long result = 1;
-    for (unsigned int i = 0; i < bits; ++i)
+    if (m_expression.empty())
+        return 0;
+    return m_expression[0].size();
+}
+unsigned int CNF::get_variables_number() const
+{
+    return m_variables_number;
+}
+size_t CNF::get_clauses_number() const
+{
+    return m_expression.size();
+}
+CNF::CNF(const std::vector<std::vector<int>>& expr)
+{
+    bool abs_comp = [](int x, int y){return std::abs(x)>std::abs(y);};
+    m_expression = expr;
+    m_variables_number = 0;
+    unsigned int max_abs = 0;
+    for (std::vector<int>& clause: m_expression)
     {
-        result *= 2;
+        std::sort(clause.begin(), clause.end());
+        max_abs = std::max(std::abs(clause.front()), std::abs(clause.back()));
+        m_variables_number = std::max(max_abs, m_variables_number);
     }
-    result -=1;
-    return result;
 }
-unsigned int CNF::get_clause_size()const
+CNF::CNF(const std::vector<std::vector<int>>& expr, unsigned int variables_number)
 {
-    return m_clause_size;
-}
-unsigned int CNF::get_clauses_number() const
-{
-    return m_clauses_number;
-}
-unsigned long long CNF::get_repr_number() const
-{
-    return m_repr_number;
-}
-CNF::CNF(unsigned long long repr_number, unsigned int clause_size, unsigned int clauses_number)
-{
-    m_repr_number = repr_number;
-    m_clause_size = clause_size;
-    m_clauses_number = clauses_number;
-}
-unsigned long long CNF::operator[](size_t index) const
-{
-    unsigned long long cur_repr_number = m_repr_number;
-    for(size_t cur_index = 0; cur_index < (m_clauses_number - index - 1); cur_index++)
+    m_expression = expr;
+    m_variables_number = variables_number;
+    for (std::vector<int>& clause: m_expression)
     {
-        cur_repr_number >>= m_clause_size;
+        std::sort(clause.begin(), clause.end());
     }
-    return cur_repr_number & max_number_with_given_bits(m_clause_size);
 }
-bool CNF::value(unsigned long long values_repr_number)const
+CNF::CNF(const std::vector<int>& expr)
 {
-    for (size_t i = 0; i < m_clauses_number; ++i)
-    {
-        if (!(values_repr_number ^ (*this)[i]))
-            return false;
-    }
-    return true;
+    m_expression.push_back(expr);
+    std::sort(m_expression[0].begin(), m_expression[0].end());
+    unsigned int max_abs = std::max(std::abs(m_expression[0].front()), std::abs(m_expression[0].back()));
+    m_variables_number = std::max(max_abs, m_variables_number);
 }
-template <size_t bitset_length>
-bool CNF::value(const std::bitset<bitset_length>& values_bitset)const
+std::vector<std::vector<int>> CNF::get_expression() const {
+    return m_expression;
+}
+std::vector<int> CNF::operator[](size_t index) const
 {
-    return get_value(values_bitset.to_ullong());
+    return m_expression[index];
 }
-CNF CNF::remove_clause(size_t index)const
+bool CNF::clause_value(size_t clause_index, const std::vector<int>& variables)const
 {
-    unsigned long long result_repr_number = m_repr_number;
-    unsigned long long tail = max_number_with_given_bits(index*m_clause_size) & result_repr_number;
-    for(int cur_index = 0; cur_index <= index; ++cur_index)
-    {
-        result_repr_number >>=m_clause_size;
-    }
-    for(int cur_index = 0; cur_index <= index - 1; ++cur_index)
-    {
-        result_repr_number <<= m_clause_size;
-    }
-    result_repr_number |= tail;
-    return {result_repr_number, m_clause_size, m_clauses_number - 1};
+    auto are_equal = [this, &clause_index, &variables](size_t index){return m_expression[clause_index][index] == variables[index];};
+    return std::any_of(variables.begin(), variables.end(), are_equal);
 }
-CNF CNF::reduce_last_variable()const
+bool CNF::value(const std::vector<int> &variables) const
 {
-    unsigned long long result_repr_number = 0;
-    unsigned long long subset_number = 0;
-    for(int index = 0; index < m_clauses_number; ++index)
-    {
-        subset_number = (*this)[index];
-        subset_number >>= 1;
-        subset_number <<= (m_clause_size-1) * (m_clauses_number - index - 1);
-        result_repr_number |= subset_number;
-    }
-    return {result_repr_number, m_clause_size-1, m_clauses_number};
+    auto is_true = [this, &variables](size_t index){return clause_value(index, variables);};
+    return std::all_of(variables.begin(), variables.end(), is_true);
 }
+void CNF::remove_clause(size_t clause_index)
+{
+    m_expression.erase(m_expression.begin()+clause_index);
+}
+void CNF::reduce_variable(int variable_index) 
+{
+    unsigned int max_abs = 0;
+    for (std::vector<int>& clause: m_expression)
+    {
+        clause.erase(std::remove(clause.begin(), clause.end(), variable_index), clause.end());
+        clause.erase(std::remove(clause.begin(), clause.end(), -variable_index), clause.end());
+        max_abs = std::max(std::abs(clause.front()), std::abs(clause.back()));
+        m_variables_number = std::max(max_abs, m_variables_number);
+    }
+
+}
+

@@ -3,24 +3,29 @@
 //
 
 #pragma once
+#include <vector>
 #include<bitset>
+#include <array>
+unsigned long long max_number_with_given_bits(unsigned int bits);
+
+
+
 class CNF
 {
-    unsigned long long m_repr_number;
-    unsigned int m_clause_size;
-    unsigned int m_clauses_number;
+    unsigned int m_variables_number = 0;
+    std::vector<std::vector<int>> m_expression;
+
 public:
-    unsigned int get_clause_size() const;
-    unsigned int get_clauses_number() const;
-    unsigned long long get_repr_number() const;
-    CNF(unsigned long long repr_number, unsigned int clause_size, unsigned int clauses_number);
-    template<size_t bitset_length>
-    CNF(std::bitset<bitset_length>& bitset_representation, unsigned int clause_size, unsigned int clauses_number);
-    unsigned long long operator[](size_t index) const;
-    bool value(unsigned long long values_repr_number) const;
-    template<size_t bitset_length>
-    bool value(const std::bitset<bitset_length>& values_bitset) const;
-    CNF remove_clause(size_t index) const;
-    CNF reduce_last_variable() const;
+    unsigned int get_variables_number() const;
+    [[nodiscard]] size_t get_clause_size() const;
+    [[nodiscard]] size_t get_clauses_number() const;
+    std::vector<std::vector<int>> get_expression() const;
+    explicit CNF(const std::vector<std::vector<int>>& expr);
+    explicit CNF(const std::vector<std::vector<int>>&expr, unsigned int variables_number);
+    explicit CNF(const std::vector<int> &expr);
+    std::vector<int> operator[](size_t index)const;
+    bool clause_value(size_t clause_index, const std::vector<int>& variables)const;
+    bool value(const std::vector<int>& variables)const;
+    void reduce_variable(int variable_index);
+    void remove_clause(size_t clause_index);
 };
-#include "cnf.tpp"
