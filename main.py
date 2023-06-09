@@ -1,6 +1,6 @@
 from cnf import CNF as MyCNF
 from pysat.examples.lsu import LSU
-from heuristics import maxsat_78
+from approximations import maxsat_12
 from time import time
 import numpy as np
 from pysat.examples.rc2 import RC2
@@ -57,26 +57,26 @@ def main():
     generate_all()
     f = open("logs_MAX_3_SAT_LSU_approx.csv", "w")
     sign = lambda x: 1 if x > 0 else -1
-    f.write("Number of variables,Number of clauses,result 7/8,time 7/8,result LSU interrupted\n")
+    f.write("Number of variables,Number of clauses,result 1/2,time 1/2,result LSU interrupted\n")
     for v in range(5, 80, 2):
         for c in range(100, 1000, 100):
             for number in range(1, 6):
                 start = time()
                 a = read_cnf(f"benchmarks/bench{v}v{c}c3-{number}.cnf")
-                sat_approx = maxsat_78.solve(a)
+                sat_approx = maxsat_12.solve(a)
                 result_approx = a.count_values(sat_approx)
                 end = time()
-                time_78 = end - start
+                time_12 = end - start
                 cnf = CNF(from_file=f"benchmarks/bench{v}v{c}c3-{number}.cnf")
                 lsu_interrupted = LSU(cnf.weighted(), expect_interrupt=True)
-                timer = Timer(time_78, interrupt, [lsu_interrupted])
+                timer = Timer(time_12, interrupt, [lsu_interrupted])
                 timer.start()
                 lsu_interrupted.solve()
                 lsu_interrupted.clear_interrupt()
                 sat_interrupted = np.array([sign(x) for x in lsu_interrupted.model])
                 result_interrupted = a.count_values(sat_interrupted)
-                f.write(f"{v},{c},{result_approx},{time_78},{result_interrupted}\n")
-                print(f"{v},{c},{result_approx},{time_78},{result_interrupted}")
+                f.write(f"{v},{c},{result_approx},{time_12},{result_interrupted}\n")
+                print(f"{v},{c},{result_approx},{time_12},{result_interrupted}")
     f.close()
 
 
