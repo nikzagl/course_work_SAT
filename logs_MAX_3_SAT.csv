@@ -1,4 +1,4 @@
-Number of variables,Number of clauses,result 7/8,time 7/8,result LSU,time LSU,result LSU interrupted
+Number of variables,Number of clauses,result 1/2,time 1/2,result LSU,time LSU,result LSU interrupted
 5,100,94,0.04594826698303223,94,0.012207984924316406,94
 5,100,96,0.027060270309448242,96,0.004873752593994141,96
 5,100,91,0.026576995849609375,92,0.013806343078613281,92
